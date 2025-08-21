@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Teste de Clique com GTM</title>
+
+  <!-- Google Tag Manager -->
+  <script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-KGTJ3MVW'); 
+  </script>
+  <!-- End Google Tag Manager -->
+</head>
+
+<body style="font-family:sans-serif; padding:30px;">
+
+  <!-- Google Tag Manager (noscript) -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KGTJ3MVW"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <h1>Teste de Integração</h1>
+  <p>Clique no botão abaixo para enviar evento para o GTM + Google Sheets.</p>
+
+  <button id="botao-teste" 
+          style="padding:12px 20px; font-size:16px; cursor:pointer;">
+    Clique aqui
+  </button>
+
+  <script>
+    // Quando clicar no botão, envia evento pro GTM
+    document.getElementById("botao-teste").addEventListener("click", function() {
+      // dispara evento no dataLayer (para o GTM capturar)
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        'event': 'botao_clique',
+        'button_id': 'botao-teste',
+        'timestamp': new Date().toISOString()
+      });
+
+      // também envia direto para o seu Google Apps Script
+      fetch("https://script.google.com/macros/s/AKfycbzONkMzdBsP8IWz3Yk1kEF1xu9K_LzpWlIb7ESo42IhRyASgsutoZ2aMMGuYAPnkRADYQ/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_name: "botao_clique",
+          page_url: window.location.href,
+          user_agent: navigator.userAgent,
+          user_id: "usuario_teste",
+          value: 1
+        })
+      });
+      alert("✅ Evento disparado!");
+    });
+  </script>
+</body>
+</html>
