@@ -2,7 +2,8 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
-  <title>Teste de Clique com GTM</title>
+  <title>Teste de Clique com GTM + GA4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Google Tag Manager -->
   <script>
@@ -10,9 +11,18 @@
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
   j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-TK3PTSTL'); 
+  })(window,document,'script','dataLayer','GTM-TK3PTSTL');
   </script>
   <!-- End Google Tag Manager -->
+
+  <!-- GA4 direto (opcional, para garantir coleta mesmo sem GTM) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CT2Y2K78J2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CT2Y2K78J2');  // seu ID GA4
+  </script>
 </head>
 
 <body style="font-family:sans-serif; padding:30px;">
@@ -20,42 +30,52 @@
   <!-- Google Tag Manager (noscript) -->
   <noscript>
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TK3PTSTL"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe>
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
   </noscript>
   <!-- End Google Tag Manager (noscript) -->
 
   <h1>Teste de Integração</h1>
-  <p>Clique no botão abaixo para enviar evento para o GTM + Google Sheets.</p>
+  <p>Clique no botão abaixo para enviar evento para GTM/GA4 e gravar no Google Sheets.</p>
 
-  <button id="botao-teste" 
-          style="padding:12px 20px; font-size:16px; cursor:pointer;">
+  <button id="botao-teste" style="padding:12px 20px; font-size:16px; cursor:pointer;">
     Clique aqui
   </button>
 
   <script>
-    // Quando clicar no botão, envia evento pro GTM
-    document.getElementById("botao-teste").addEventListener("click", function() {
-      // dispara evento no dataLayer (para o GTM capturar)
+    const COLLECTOR_URL = "https://script.google.com/macros/s/AKfycbzONkMzdBsP8IWz3Yk1kEF1xu9K_LzpWlIb7ESo42IhRyASgsutoZ2aMMGuYAPnkRADYQ/exec?token=12345";
+
+    document.getElementById("botao-teste").addEventListener("click", function () {
+      // 1) Envia evento para o GTM (que você pode usar para GA4 via Tag de Evento)
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
-        'event': 'botao_clique',
-        'button_id': 'botao-teste',
-        'timestamp': new Date().toISOString()
+        event: 'botao_clique',
+        button_id: 'botao-teste',
+        timestamp: new Date().toISOString()
       });
 
-      // também envia direto para o seu Google Apps Script
-      fetch("https://script.google.com/macros/s/AKfycbzONkMzdBsP8IWz3Yk1kEF1xu9K_LzpWlIb7ESo42IhRyASgsutoZ2aMMGuYAPnkRADYQ/exec", {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event_name: "botao_clique",
-          page_url: window.location.href,
-          user_agent: navigator.userAgent,
-          user_id: "usuario_teste",
-          value: 1
-        })
-      });
+      // 2) Envia direto ao GA4 via gtag (redundante, mas útil para validar)
+      if (typeof gtag === 'function') {
+        gtag('event', 'botao_clique', {
+          button_id: 'botao-teste',
+          send_to: 'G-CT2Y2K78J2'
+        });
+      }
+
+      // 3) Grava na planilha (Apps Script) — usa sendBeacon para maior confiabilidade
+      const payload = {
+        event_name: "botao_clique",
+        page_url: window.location.href,
+        user_agent: navigator.userAgent,
+        user_id: "usuario_teste",
+        value: 1
+      };
+      const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(COLLECTOR_URL, blob);
+      } else {
+        fetch(COLLECTOR_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      }
+
       alert("✅ Evento disparado!");
     });
   </script>
